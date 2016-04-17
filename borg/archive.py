@@ -1048,7 +1048,7 @@ class ArchiveRecreater:
         chunk_iterator = self.create_chunk_iterator(archive, target, item)
         consume(chunk_iterator, len(new_chunks))
         for chunk in chunk_iterator:
-            chunk_id = self.key.id_hash(chunk)
+            chunk_id = self.key.id_hash(chunk.data)
             if chunk_id in self.seen_chunks:
                 new_chunks.append(self.cache.chunk_incref(chunk_id, target.stats))
             else:
@@ -1079,7 +1079,12 @@ class ArchiveRecreater:
             # The target.chunker will read the file contents through ChunkIteratorFileWrapper chunk-by-chunk
             # (does not load the entire file into memory)
             file = ChunkIteratorFileWrapper(chunk_iterator)
-            chunk_iterator = target.chunker.chunkify(file)
+
+            def _chunk_iterator():
+                for data in target.chunker.chunkify(file):
+                    yield mkchunk(data)
+
+            chunk_iterator = _chunk_iterator()
         return chunk_iterator
 
     def process_partial_chunks(self, target):

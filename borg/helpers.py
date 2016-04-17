@@ -1292,7 +1292,8 @@ class ChunkIteratorFileWrapper:
         remaining = len(self.chunk) - self.chunk_offset
         if not remaining:
             try:
-                self.chunk = memoryview(next(self.chunk_iterator))
+                chunk = next(self.chunk_iterator)
+                self.chunk = memoryview(chunk.data)
             except StopIteration:
                 self.exhausted = True
                 return 0  # EOF
