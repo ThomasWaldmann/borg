@@ -23,7 +23,7 @@ from ..archiver import Archiver
 from ..cache import Cache
 from ..constants import *  # NOQA
 from ..crypto import bytes_to_long, num_aes_blocks
-from ..helpers import mkchunk, Manifest, EXIT_SUCCESS, EXIT_WARNING, EXIT_ERROR
+from ..helpers import Chunk, Manifest, EXIT_SUCCESS, EXIT_WARNING, EXIT_ERROR
 from ..key import KeyfileKeyBase
 from ..remote import RemoteRepository, PathNotAllowed
 from ..repository import Repository
@@ -1677,8 +1677,8 @@ def test_get_args():
 
 def test_compare_chunk_contents():
     def ccc(a, b):
-        chunks_a = [mkchunk(data) for data in a]
-        chunks_b = [mkchunk(data) for data in b]
+        chunks_a = [Chunk(data) for data in a]
+        chunks_b = [Chunk(data) for data in b]
         compare1 = Archiver.compare_chunk_contents(iter(chunks_a), iter(chunks_b))
         compare2 = Archiver.compare_chunk_contents(iter(chunks_b), iter(chunks_a))
         assert compare1 == compare2

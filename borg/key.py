@@ -7,7 +7,7 @@ import textwrap
 from hmac import compare_digest
 from hashlib import sha256, pbkdf2_hmac
 
-from .helpers import mkchunk, IntegrityError, get_keys_dir, Error, yes
+from .helpers import Chunk, IntegrityError, get_keys_dir, Error, yes
 from .logger import create_logger
 logger = create_logger()
 
@@ -111,7 +111,7 @@ class PlaintextKey(KeyBase):
         data = self.compressor.decompress(memoryview(data)[1:])
         if id and sha256(data).digest() != id:
             raise IntegrityError('Chunk id verification failed')
-        return mkchunk(data)
+        return Chunk(data)
 
 
 class AESKeyBase(KeyBase):
@@ -157,7 +157,7 @@ class AESKeyBase(KeyBase):
             hmac_computed = hmac_sha256(self.id_key, data)
             if not compare_digest(hmac_computed, hmac_given):
                 raise IntegrityError('Chunk id verification failed')
-        return mkchunk(data)
+        return Chunk(data)
 
     def extract_nonce(self, payload):
         if not (payload[0] == self.TYPE or

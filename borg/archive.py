@@ -18,7 +18,7 @@ from io import BytesIO
 from . import xattr
 from .compress import Compressor, COMPR_BUFFER
 from .constants import *  # NOQA
-from .helpers import mkchunk, Error, uid2user, user2uid, gid2group, group2gid, \
+from .helpers import Chunk, Error, uid2user, user2uid, gid2group, group2gid, \
     parse_timestamp, to_localtime, format_time, format_timedelta, \
     Manifest, Statistics, decode_dict, make_path_safe, StableDict, int_to_bigint, bigint_to_int, \
     ProgressIndicatorPercent, ChunkIteratorFileWrapper, remove_surrogates, log_multi, \
@@ -87,7 +87,7 @@ class ChunkBuffer:
         if self.buffer.tell() == 0:
             return
         self.buffer.seek(0)
-        chunks = list(mkchunk(bytes(s)) for s in self.chunker.chunkify(self.buffer))
+        chunks = list(Chunk(bytes(s)) for s in self.chunker.chunkify(self.buffer))
         self.buffer.seek(0)
         self.buffer.truncate(0)
         # Leave the last partial chunk in the buffer unless flush is True
@@ -263,7 +263,7 @@ Number of files: {0.stats.nfiles}'''.format(
         metadata.update(additional_metadata or {})
         data = msgpack.packb(StableDict(metadata), unicode_errors='surrogateescape')
         self.id = self.key.id_hash(data)
-        self.cache.add_chunk(self.id, mkchunk(data), self.stats)
+        self.cache.add_chunk(self.id, Chunk(data), self.stats)
         self.manifest.archives[name] = {'id': self.id, 'time': metadata['time']}
         self.manifest.write()
         self.repository.commit()
@@ -450,7 +450,7 @@ Number of files: {0.stats.nfiles}'''.format(
         metadata[key] = value
         data = msgpack.packb(metadata, unicode_errors='surrogateescape')
         new_id = self.key.id_hash(data)
-        self.cache.add_chunk(new_id, mkchunk(data), self.stats)
+        self.cache.add_chunk(new_id, Chunk(data), self.stats)
         self.manifest.archives[self.name] = {'id': new_id, 'time': metadata[b'time']}
         self.cache.chunk_decref(self.id, self.stats)
         self.id = new_id
@@ -534,7 +534,7 @@ Number of files: {0.stats.nfiles}'''.format(
         fd = sys.stdin.buffer  # binary
         chunks = []
         for data in self.chunker.chunkify(fd):
-            chunks.append(cache.add_chunk(self.key.id_hash(data), mkchunk(data), self.stats))
+            chunks.append(cache.add_chunk(self.key.id_hash(data), Chunk(data), self.stats))
         self.stats.nfiles += 1
         t = int_to_bigint(int(time.time()) * 1000000000)
         item = {
@@ -591,7 +591,7 @@ Number of files: {0.stats.nfiles}'''.format(
             with os.fdopen(fh, 'rb') as fd:
                 chunks = []
                 for data in self.chunker.chunkify(fd, fh):
-                    chunks.append(cache.add_chunk(self.key.id_hash(data), mkchunk(data), self.stats))
+                    chunks.append(cache.add_chunk(self.key.id_hash(data), Chunk(data), self.stats))
                     if self.show_progress:
                         self.stats.show_progress(item=item, dt=0.2)
             cache.memorize_file(path_hash, st, [c.id for c in chunks])
@@ -797,7 +797,7 @@ class ArchiveChecker:
                     self.error_found = True
                     data = bytes(size)
                     chunk_id = self.key.id_hash(data)
-                    cdata = self.key.encrypt(mkchunk(data))
+                    cdata = self.key.encrypt(Chunk(data))
                     csize = len(cdata)
                     add_reference(chunk_id, size, csize, cdata)
                 else:
@@ -893,7 +893,7 @@ class ArchiveChecker:
                 archive[b'items'] = items_buffer.chunks
                 data = msgpack.packb(archive, unicode_errors='surrogateescape')
                 new_archive_id = self.key.id_hash(data)
-                cdata = self.key.encrypt(mkchunk(data))
+                cdata = self.key.encrypt(Chunk(data))
                 add_reference(new_archive_id, len(data), len(cdata), cdata)
                 info[b'id'] = new_archive_id
 
@@ -1082,7 +1082,7 @@ class ArchiveRecreater:
 
             def _chunk_iterator():
                 for data in target.chunker.chunkify(file):
-                    yield mkchunk(data)
+                    yield Chunk(data)
 
             chunk_iterator = _chunk_iterator()
         return chunk_iterator

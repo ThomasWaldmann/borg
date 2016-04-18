@@ -38,11 +38,11 @@ import socket
 
 
 # meta dict, data bytes
-Chunk = namedtuple('Chunk', 'meta data')
+_Chunk = namedtuple('_Chunk', 'meta data')
 
 
-def mkchunk(data, **meta):
-    return Chunk(meta, data)
+def Chunk(data, **meta):
+    return _Chunk(meta, data)
 
 
 class Error(Exception):
@@ -122,7 +122,7 @@ class Manifest:
             'config': self.config,
         }))
         self.id = self.key.id_hash(data)
-        self.repository.put(self.MANIFEST_ID, self.key.encrypt(mkchunk(data)))
+        self.repository.put(self.MANIFEST_ID, self.key.encrypt(Chunk(data)))
 
     def list_archive_infos(self, sort_by=None, reverse=False):
         # inexpensive Archive.list_archives replacement if we just need .name, .id, .ts
