@@ -16,7 +16,6 @@ from ...cache import get_cache_impl
 from ...constants import *  # NOQA
 from ...manifest import Manifest
 from ...platform import is_cygwin, is_win32, is_darwin
-from ...repository import Repository
 from ...repository3 import Repository3
 from ...helpers import CommandError, BackupPermissionError
 from .. import has_lchflags

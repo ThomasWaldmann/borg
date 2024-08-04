@@ -36,7 +36,7 @@ try:
     from ..helpers import ErrorIgnoringTextIOWrapper
     from ..helpers import msgpack
     from ..helpers import sig_int
-    from ..remote import RemoteRepository
+    from ..remote import RemoteRepository  # TODO 3?
     from ..selftest import selftest
 except BaseException:
     # an unhandled exception in the try-block would cause the borg cli command to exit with rc 1 due to python's

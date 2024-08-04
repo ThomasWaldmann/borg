@@ -8,7 +8,6 @@ from ...archive import ChunkBuffer
 from ...constants import *  # NOQA
 from ...helpers import bin_to_hex, msgpack
 from ...manifest import Manifest
-from ...repository import Repository
 from ...repository3 import Repository3
 from . import cmd, src_file, create_src_archive, open_archive, generate_archiver_tests, RK_ENCRYPTION
 

@@ -9,7 +9,6 @@ from ...crypto.keymanager import RepoIdMismatch, NotABorgKeyFile
 from ...helpers import CommandError
 from ...helpers import bin_to_hex, hex_to_bin
 from ...helpers import msgpack
-from ...repository import Repository
 from ...repository3 import Repository3
 from .. import key
 from . import RK_ENCRYPTION, KF_ENCRYPTION, cmd, _extract_repository_id, _set_repository_id, generate_archiver_tests

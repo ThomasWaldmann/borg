@@ -6,7 +6,6 @@ import pytest
 from ...helpers.errors import Error, CancelledByUser
 from ...constants import *  # NOQA
 from ...crypto.key import FlexiKey
-from ...repository import Repository
 from . import cmd, generate_archiver_tests, RK_ENCRYPTION, KF_ENCRYPTION
 
 pytest_generate_tests = lambda metafunc: generate_archiver_tests(metafunc, kinds="local,remote,binary")  # NOQA

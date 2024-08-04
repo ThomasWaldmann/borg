@@ -32,7 +32,7 @@ from .locking import Lock
 from .manifest import Manifest
 from .platform import SaveFile
 from .remote import cache_if_remote
-from .repository import LIST_SCAN_LIMIT
+from .repository3 import LIST_SCAN_LIMIT
 
 # note: cmtime might be either a ctime or a mtime timestamp, chunks is a list of ChunkListEntry
 FileCacheEntry = namedtuple("FileCacheEntry", "age inode size cmtime chunks")

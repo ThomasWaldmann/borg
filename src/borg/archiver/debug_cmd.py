@@ -15,8 +15,8 @@ from ..helpers import positive_int_validator, archivename_validator
 from ..helpers import CommandError, RTError
 from ..manifest import Manifest
 from ..platform import get_process_id
-from ..repository import Repository, LIST_SCAN_LIMIT, TAG_PUT, TAG_DELETE, TAG_COMMIT
-from ..repository3 import Repository3
+from ..repository import Repository, TAG_PUT, TAG_DELETE, TAG_COMMIT
+from ..repository3 import Repository3, LIST_SCAN_LIMIT
 from ..repoobj import RepoObj
 
 from ._common import with_repository, Highlander
