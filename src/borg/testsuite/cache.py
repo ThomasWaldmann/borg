@@ -164,7 +164,7 @@ class TestAdHocCache:
     @pytest.fixture
     def repository(self, tmpdir):
         self.repository_location = os.path.join(str(tmpdir), "repository")
-        with Repository(self.repository_location, exclusive=True, create=True) as repository:
+        with Repository(self.repository_location, exclusive=True, create=True) as repository:  # TODO 3?
             repository.put(H(1), b"1234")
             repository.put(Manifest.MANIFEST_ID, b"5678")
             yield repository

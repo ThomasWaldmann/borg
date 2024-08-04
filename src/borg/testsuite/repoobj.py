@@ -10,7 +10,7 @@ from ..compress import LZ4
 
 @pytest.fixture
 def repository(tmpdir):
-    return Repository(tmpdir, create=True)
+    return Repository(tmpdir, create=True)  # TODO 3?
 
 
 @pytest.fixture

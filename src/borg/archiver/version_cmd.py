@@ -16,7 +16,7 @@ class VersionMixIn:
 
         client_version = parse_version(__version__)
         if args.location.proto in ("ssh", "socket"):
-            with RemoteRepository(args.location, lock=False, args=args) as repository:
+            with RemoteRepository(args.location, lock=False, args=args) as repository: # TODO 3?
                 server_version = repository.server_version
         else:
             server_version = client_version

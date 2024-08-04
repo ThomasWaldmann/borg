@@ -640,6 +640,7 @@ class RemoteRepository:
                 exclusive=exclusive,
                 append_only=append_only,
                 make_parent_dirs=make_parent_dirs,
+                v1_or_v2=True,  # make remote use Repository, not Repository3
             )
             info = self.info()
             self.version = info["version"]
@@ -939,9 +940,10 @@ class RemoteRepository:
         since=parse_version("1.0.0"),
         append_only={"since": parse_version("1.0.7"), "previously": False},
         make_parent_dirs={"since": parse_version("1.1.9"), "previously": False},
+        v1_or_v2={"since": parse_version("2.0.0b8"), "previously": True},  # TODO fix version
     )
     def open(
-        self, path, create=False, lock_wait=None, lock=True, exclusive=False, append_only=False, make_parent_dirs=False
+        self, path, create=False, lock_wait=None, lock=True, exclusive=False, append_only=False, make_parent_dirs=False, v1_or_v2=False
     ):
         """actual remoting is done via self.call in the @api decorator"""
 
