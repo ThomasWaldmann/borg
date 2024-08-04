@@ -16,6 +16,7 @@ from ..helpers import CommandError, RTError
 from ..manifest import Manifest
 from ..platform import get_process_id
 from ..repository import Repository, LIST_SCAN_LIMIT, TAG_PUT, TAG_DELETE, TAG_COMMIT
+from ..repository3 import Repository3
 from ..repoobj import RepoObj
 
 from ._common import with_repository, Highlander
@@ -330,7 +331,7 @@ class DebugMixIn:
                     repository.delete(id)
                     modified = True
                     print("object %s deleted." % hex_id)
-                except Repository.ObjectNotFound:
+                except Repository3.ObjectNotFound:
                     print("object %s not found." % hex_id)
         if modified:
             repository.commit(compact=False)

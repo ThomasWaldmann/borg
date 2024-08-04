@@ -17,6 +17,7 @@ from ...constants import *  # NOQA
 from ...manifest import Manifest
 from ...platform import is_cygwin, is_win32, is_darwin
 from ...repository import Repository
+from ...repository3 import Repository3
 from ...helpers import CommandError, BackupPermissionError
 from .. import has_lchflags
 from .. import changedir
@@ -668,7 +669,7 @@ def test_create_dry_run(archivers, request):
     cmd(archiver, "rcreate", RK_ENCRYPTION)
     cmd(archiver, "create", "--dry-run", "test", "input")
     # Make sure no archive has been created
-    with Repository(archiver.repository_path) as repository:
+    with Repository3(archiver.repository_path) as repository:
         manifest = Manifest.load(repository, Manifest.NO_OPERATION_CHECK)
     assert len(manifest.archives) == 0
 

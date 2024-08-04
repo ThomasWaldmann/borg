@@ -35,7 +35,7 @@ def test_transfer(archivers, request):
     check_repo()
 
     archiver.repository_location = original_location + "2"
-    other_repo1 = f"--other-repo={original_location}1"
+    other_repo1 = f"--other-repo={original_location}1"  # XXX broken: --other-repo only accepts "Repository", but not "Repository3" repos
     cmd(archiver, "rcreate", RK_ENCRYPTION, other_repo1)
     cmd(archiver, "transfer", other_repo1, "--dry-run")
     cmd(archiver, "transfer", other_repo1)

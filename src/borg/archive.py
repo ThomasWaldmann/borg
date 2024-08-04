@@ -1887,7 +1887,7 @@ class ArchiveChecker:
         # Explicitly set the initial usable hash table capacity to avoid performance issues
         # due to hash table "resonance".
         # Since reconstruction of archive items can add some new chunks, add 10 % headroom.
-        self.chunks = ChunkIndex(usable=len(self.repository) * 1.1)
+        self.chunks = ChunkIndex()
         marker = None
         while True:
             result = self.repository.list(limit=LIST_SCAN_LIMIT, marker=marker)
