@@ -1,6 +1,5 @@
 import argparse
 
-from ._argparse import ArgumentParser
 from contextlib import contextmanager
 import os
 import tempfile
@@ -11,6 +10,7 @@ from ..crypto.key import FlexiKey
 from ..helpers import format_file_size
 from ..helpers import msgpack
 from ..helpers import get_reset_ec
+from ..helpers.jap_wrapper import ArgumentParser
 from ..item import Item
 from ..platform import SyncFile
 
