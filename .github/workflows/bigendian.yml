@@ -113,6 +113,9 @@ jobs:
         # modules of one architecture in there for the other one to pick up.
         python -m venv "$RUNNER_TEMP/venv-native"
         "$RUNNER_TEMP/venv-native/bin/pip" install --upgrade pip wheel
+        # pytest: borg's selftest imports the test suite, which currently pulls
+        # in pytest, so even "borg --version" needs it to be installed.
+        "$RUNNER_TEMP/venv-native/bin/pip" install pytest
         "$RUNNER_TEMP/venv-native/bin/pip" install .
         "$RUNNER_TEMP/venv-native/bin/borg" --version
         "$RUNNER_TEMP/venv-native/bin/python" -c 'import sys; assert sys.byteorder == "little", sys.byteorder'
