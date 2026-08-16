@@ -38,16 +38,17 @@ jobs:
         pip install -r requirements.d/development.lock.txt
         pip install -e .
 
-    - name: Verify hostname-resolution root cause and /etc/hosts fix
+    - name: Fix hostname (round 4 - /etc/hosts alone did not help for a .local name)
       run: |
         set -ux
-        echo "hostname: $(hostname)"
-        time python -c "import socket; print(socket.gethostname())"
-        echo "===== the suspected 35s: resolve own hostname (AI_CANONNAME) ====="
+        echo "before: $(hostname)"
         time python -c "import socket; socket.getaddrinfo(socket.gethostname(), None, 0, socket.SOCK_DGRAM, 0, socket.AI_CANONNAME)" || true
-        time python -m borg --version
-        echo "===== fix: make the hostname resolvable ====="
-        echo "127.0.0.1 $(hostname)" | sudo tee -a /etc/hosts
+        # the runner hostname is a long, unresolvable .local name; .local is mDNS
+        # territory on macOS, so an /etc/hosts entry does not satisfy the canonical
+        # name query (verified in round 3). Give the host a plain name instead.
+        sudo scutil --set HostName borg-ci-mac
+        echo "127.0.0.1 borg-ci-mac" | sudo tee -a /etc/hosts
+        echo "after: $(hostname)"
         time python -c "import socket; socket.getaddrinfo(socket.gethostname(), None, 0, socket.SOCK_DGRAM, 0, socket.AI_CANONNAME)" || true
         time python -m borg --version
         time python -m borg --version
