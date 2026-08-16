@@ -38,7 +38,24 @@ jobs:
         pip install -r requirements.d/development.lock.txt
         pip install -e .
 
+    - name: Verify hostname-resolution root cause and /etc/hosts fix
+      run: |
+        set -ux
+        echo "hostname: $(hostname)"
+        time python -c "import socket; print(socket.gethostname())"
+        echo "===== the suspected 35s: resolve own hostname (AI_CANONNAME) ====="
+        time python -c "import socket; socket.getaddrinfo(socket.gethostname(), None, 0, socket.SOCK_DGRAM, 0, socket.AI_CANONNAME)" || true
+        time python -m borg --version
+        echo "===== fix: make the hostname resolvable ====="
+        echo "127.0.0.1 $(hostname)" | sudo tee -a /etc/hosts
+        time python -c "import socket; socket.getaddrinfo(socket.gethostname(), None, 0, socket.SOCK_DGRAM, 0, socket.AI_CANONNAME)" || true
+        time python -m borg --version
+        time python -m borg --version
+        echo "===== remote test after fix (was ~400s) ====="
+        time pytest -v -p no:xdist --benchmark-skip "src/borg/testsuite/archiver/create_cmd_test.py::test_basic_functionality[remote_archiver]"
+
     - name: Decompose python process launch cost
+      if: ${{ false }}  # round 2, kept for reference
       run: |
         set -uxo pipefail
         echo "===== bare interpreter launches (venv python = sys.executable) ====="
