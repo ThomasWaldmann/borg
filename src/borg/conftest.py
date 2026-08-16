@@ -225,3 +225,68 @@ def binary_archiver(archiver):
     archiver.EXE = "borg.exe"
     archiver.FORK_DEFAULT = True
     yield archiver
+
+
+if os.environ.get("BORG_DIAG_STDIO"):
+    # TEMPORARY instrumentation for diagnosing macOS CI rest:// slowness, see #9470.
+    import subprocess as _subprocess
+    import sys as _sys
+    import time as _time
+
+    from borgstore.backends import rest as _rest
+
+    def _diag(msg):
+        print(f"[diag {_time.strftime('%H:%M:%S')}] {msg}", file=_sys.stderr, flush=True)
+
+    _orig_open = _rest.StdioSession.open
+
+    def _open(self):
+        t0 = _time.perf_counter()
+        _orig_open(self)
+        _diag(f"stdio open pid={self.process.pid} took {_time.perf_counter() - t0:.3f}s")
+
+    def _close(self):
+        # instrumented copy of StdioSession.close
+        if self.process is None:
+            return
+        pid = self.process.pid
+        t0 = t1 = _time.perf_counter()
+        rc = "n/a"
+        killed = False
+        try:
+            if self.process.stdin is not None:
+                self.process.stdin.close()
+            t1 = _time.perf_counter()
+            try:
+                self.process.wait(timeout=self.timeout)
+                rc = self.process.returncode
+            except _subprocess.TimeoutExpired:
+                killed = True
+                self.process.kill()
+                self.process.wait(timeout=self.timeout)
+        finally:
+            t2 = _time.perf_counter()
+            _diag(f"stdio close pid={pid} stdin_close={t1 - t0:.3f}s wait={t2 - t1:.3f}s rc={rc} killed={killed}")
+            if self.process.stdout is not None:
+                self.process.stdout.close()
+            if self.process.stderr is not None:
+                self.process.stderr.close()
+            if self._stderr_thread is not None:
+                self._stderr_thread.join(timeout=0.5)
+            self.process = None
+            self._stderr_thread = None
+
+    _orig_request = _rest.StdioSession.request
+
+    def _request(self, method, url, **kwargs):
+        t0 = _time.perf_counter()
+        try:
+            return _orig_request(self, method, url, **kwargs)
+        finally:
+            d = _time.perf_counter() - t0
+            if d > 1.0:
+                _diag(f"stdio SLOW request {method} {url} took {d:.3f}s")
+
+    _rest.StdioSession.open = _open
+    _rest.StdioSession.close = _close
+    _rest.StdioSession.request = _request

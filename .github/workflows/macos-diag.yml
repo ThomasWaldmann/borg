@@ -1,0 +1,61 @@
+# TEMPORARY: diagnose the extreme slowness of remote (rest://) tests on macOS
+# runners, see #9470. Runs on the fork on every push to its branch.
+
+name: macos-stdio-diag
+
+on:
+  push:
+    branches: [ macos-stdio-diag ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diag:
+    runs-on: macos-15
+    timeout-minutes: 40
+
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+
+    - name: Set up Python
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      with:
+        python-version: '3.14'
+
+    - name: Install macOS packages
+      run: |
+        brew unlink pkg-config@0.29.2 || true
+        brew bundle install
+
+    - name: Install borg
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.d/development.lock.txt
+        pip install -e .
+
+    - name: Diagnose stdio serve close behavior
+      env:
+        BORG_DIAG_STDIO: "1"
+      run: |
+        set -uxo pipefail
+        # background sampler: stack of any live "borg serve --rest" child, every few seconds
+        ( while true; do
+            for pid in $(pgrep -f 'serve --rest' 2>/dev/null || true); do
+              echo "=== $(date -u '+%H:%M:%S') serve pid $pid ==="
+              ps -p "$pid" -o pid,stat,etime,command || true
+              sudo sample "$pid" 1 -mayDie 2>&1 | head -60 || true
+            done
+            sleep 3
+          done ) &
+        SAMPLER=$!
+        T="src/borg/testsuite/archiver/create_cmd_test.py::test_basic_functionality[remote_archiver]"
+        echo "===== run 1: WITH coverage (as in the real job) ====="
+        time pytest -v -s -p no:xdist --benchmark-skip --cov=borg --cov-config=pyproject.toml --cov-report= "$T"
+        echo "===== run 2: WITHOUT coverage ====="
+        time pytest -v -s -p no:xdist --benchmark-skip "$T"
+        kill $SAMPLER || true
