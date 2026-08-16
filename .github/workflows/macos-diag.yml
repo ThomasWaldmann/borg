@@ -38,24 +38,34 @@ jobs:
         pip install -r requirements.d/development.lock.txt
         pip install -e .
 
-    - name: Diagnose stdio serve close behavior
-      env:
-        BORG_DIAG_STDIO: "1"
+    - name: Decompose python process launch cost
       run: |
         set -uxo pipefail
-        # background sampler: stack of any live "borg serve --rest" child, every few seconds
-        ( while true; do
-            for pid in $(pgrep -f 'serve --rest' 2>/dev/null || true); do
-              echo "=== $(date -u '+%H:%M:%S') serve pid $pid ==="
-              ps -p "$pid" -o pid,stat,etime,command || true
-              sudo sample "$pid" 1 -mayDie 2>&1 | head -60 || true
-            done
-            sleep 3
-          done ) &
-        SAMPLER=$!
-        T="src/borg/testsuite/archiver/create_cmd_test.py::test_basic_functionality[remote_archiver]"
-        echo "===== run 1: WITH coverage (as in the real job) ====="
-        time pytest -v -s -p no:xdist --benchmark-skip --cov=borg --cov-config=pyproject.toml --cov-report= "$T"
-        echo "===== run 2: WITHOUT coverage ====="
-        time pytest -v -s -p no:xdist --benchmark-skip "$T"
-        kill $SAMPLER || true
+        echo "===== bare interpreter launches (venv python = sys.executable) ====="
+        time python -c pass
+        time python -c pass
+        PYEXE=$(python -c 'import sys; print(sys.executable)')
+        echo "sys.executable: $PYEXE"
+        echo "===== Python.app wrapper vs plain bin binary ====="
+        FRAMEWORK=/Library/Frameworks/Python.framework/Versions/3.14
+        ls -la "$FRAMEWORK/bin/python3.14" "$FRAMEWORK/Resources/Python.app/Contents/MacOS/Python" || true
+        time "$FRAMEWORK/Resources/Python.app/Contents/MacOS/Python" -c pass || true
+        time "$FRAMEWORK/Resources/Python.app/Contents/MacOS/Python" -c pass || true
+        time "$FRAMEWORK/bin/python3.14" -c pass || true
+        time "$FRAMEWORK/bin/python3.14" -c pass || true
+        echo "===== preinstalled runner pythons for comparison ====="
+        time /usr/bin/python3 -c pass || true
+        BREWPY=$(brew --prefix 2>/dev/null)/bin/python3
+        [ -x "$BREWPY" ] && time "$BREWPY" -c pass || true
+        echo "===== borg startup (twice, warm) ====="
+        time python -m borg --version
+        time python -m borg --version
+        echo "===== importtime breakdown, top 25 cumulative ====="
+        python -X importtime -m borg --version 2> importtime.txt >/dev/null || true
+        sort -t'|' -k2 -rn importtime.txt | head -25
+        echo "===== mitigation test: disable gatekeeper assessment ====="
+        sudo spctl --global-disable || sudo spctl --master-disable || true
+        spctl --status || true
+        time python -c pass
+        time python -m borg --version
+        time python -m borg --version
