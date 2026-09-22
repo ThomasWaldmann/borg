@@ -52,11 +52,7 @@ jobs:
               echo "== python os.urandom(100MB)"
               time $PY -c "import os; os.urandom(100*1024*1024)"
               echo "== python 1600 x os.urandom(64KB)"
-              time $PY -c "
-import os
-for _ in range(1600):
-    os.urandom(65536)
-"
+              time $PY -c "import os; [os.urandom(65536) for _ in range(1600)]"
             fi
 
       - name: Bench on cpa v1.6.0
@@ -89,9 +85,5 @@ for _ in range(1600):
               echo "== python os.urandom(100MB)"
               time $PY -c "import os; os.urandom(100*1024*1024)"
               echo "== python 1600 x os.urandom(64KB)"
-              time $PY -c "
-import os
-for _ in range(1600):
-    os.urandom(65536)
-"
+              time $PY -c "import os; [os.urandom(65536) for _ in range(1600)]"
             fi
