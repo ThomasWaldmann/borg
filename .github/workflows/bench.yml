@@ -1,0 +1,97 @@
+name: haiku-urandom-bench
+
+on:
+  push:
+    branches: [bench-haiku-urandom]
+
+permissions: {}
+
+jobs:
+  bench:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: r1beta5
+            cpa: old            # the combo borg CI used until 2026-06-06
+          - version: r1beta5
+            cpa: modern         # same image, current action
+          - version: r1beta6
+            cpa: modern         # the combo borg CI uses now
+    runs-on: ubuntu-26.04
+    timeout-minutes: 40
+    name: haiku ${{ matrix.version }} / cpa ${{ matrix.cpa }}
+    steps:
+      - name: Bench on cpa v1.2.0
+        if: matrix.cpa == 'old'
+        uses: cross-platform-actions/action@v1.2.0
+        with:
+          operating_system: haiku
+          version: ${{ matrix.version }}
+          shell: bash
+          cpu_count: 4
+          memory: 8G
+          run: |
+            set -x
+            uname -a
+            ls -l /dev/random /dev/urandom
+            echo "== dd /dev/urandom bs=1M count=100, run 1"
+            time dd if=/dev/urandom of=/dev/null bs=1M count=100
+            echo "== dd /dev/urandom bs=1M count=100, run 2"
+            time dd if=/dev/urandom of=/dev/null bs=1M count=100
+            echo "== dd /dev/random bs=1M count=100"
+            time dd if=/dev/random of=/dev/null bs=1M count=100
+            echo "== dd /dev/urandom bs=4k count=25600"
+            time dd if=/dev/urandom of=/dev/null bs=4k count=25600
+            echo "== 4 parallel dd of 50MB each"
+            time sh -c 'for i in 1 2 3 4; do dd if=/dev/urandom of=/dev/null bs=1M count=50 & done; wait'
+            PY=$(command -v python3 || command -v python3.10 || true)
+            echo "PY=$PY"
+            if [ -n "$PY" ]; then
+              $PY --version
+              echo "== python os.urandom(100MB)"
+              time $PY -c "import os; os.urandom(100*1024*1024)"
+              echo "== python 1600 x os.urandom(64KB)"
+              time $PY -c "
+import os
+for _ in range(1600):
+    os.urandom(65536)
+"
+            fi
+
+      - name: Bench on cpa v1.6.0
+        if: matrix.cpa == 'modern'
+        uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641  # v1.6.0
+        with:
+          operating_system: haiku
+          version: ${{ matrix.version }}
+          shell: bash
+          cpu_count: 4
+          memory: 8G
+          run: |
+            set -x
+            uname -a
+            ls -l /dev/random /dev/urandom
+            echo "== dd /dev/urandom bs=1M count=100, run 1"
+            time dd if=/dev/urandom of=/dev/null bs=1M count=100
+            echo "== dd /dev/urandom bs=1M count=100, run 2"
+            time dd if=/dev/urandom of=/dev/null bs=1M count=100
+            echo "== dd /dev/random bs=1M count=100"
+            time dd if=/dev/random of=/dev/null bs=1M count=100
+            echo "== dd /dev/urandom bs=4k count=25600"
+            time dd if=/dev/urandom of=/dev/null bs=4k count=25600
+            echo "== 4 parallel dd of 50MB each"
+            time sh -c 'for i in 1 2 3 4; do dd if=/dev/urandom of=/dev/null bs=1M count=50 & done; wait'
+            PY=$(command -v python3 || command -v python3.10 || true)
+            echo "PY=$PY"
+            if [ -n "$PY" ]; then
+              $PY --version
+              echo "== python os.urandom(100MB)"
+              time $PY -c "import os; os.urandom(100*1024*1024)"
+              echo "== python 1600 x os.urandom(64KB)"
+              time $PY -c "
+import os
+for _ in range(1600):
+    os.urandom(65536)
+"
+            fi
