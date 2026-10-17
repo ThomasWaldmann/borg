@@ -10,6 +10,7 @@ import pytest
 import borg
 from ...archiver.completion_cmd import TCSH_REPO_URL_RULE, TCSH_SORTBY_FN
 from ...archiver.repo_create_cmd import ENCRYPTION_DESCRIPTIONS
+from ...platformflags import is_win32
 from . import cmd, generate_archiver_tests, RK_ENCRYPTION
 
 pytest_generate_tests = lambda metafunc: generate_archiver_tests(metafunc, kinds="local")  # NOQA
@@ -617,7 +618,9 @@ def test_bash_repo_url_no_directories(archivers, request, tmp_path):
     (tmp_path / "somerepo").mkdir()
     for url in REPO_URLS:
         # a local directory looking like the start of the URL, so that plain directory completion finds it
-        (tmp_path / url.split("/")[0]).mkdir(exist_ok=True)
+        dirname = url.split("/")[0]
+        if not (is_win32 and ":" in dirname):  # no colons in win32 file names
+            (tmp_path / dirname).mkdir(exist_ok=True)
     script = cmd(archiver, "completion", "bash")
     for url in REPO_URLS:
         result = _run_bash_completion_fn(script, f'cd "{tmp_path}"\n_borg_complete_repo_dirs "{url}"\n')
